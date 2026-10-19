@@ -7,10 +7,11 @@ namespace CanchasApi.Data
     {
         public static async Task SeedAsync(ReservasCanchasDbContext db, AuthService auth)
         {
-            // 1. Usuarios semilla (Admin y Cliente)
-            if (!db.Usuarios.Any())
+            // 1. Usuarios semilla garantizados para la demostración
+            var admin = db.Usuarios.FirstOrDefault(u => u.Email == "admin@canchas.com");
+            if (admin == null)
             {
-                var admin = new Usuario
+                admin = new Usuario
                 {
                     Nombre = "Administrador General",
                     Email = "admin@canchas.com",
@@ -19,8 +20,17 @@ namespace CanchasApi.Data
                 };
                 admin.PasswordHash = auth.HashPassword(admin, "Admin123!");
                 db.Usuarios.Add(admin);
+            }
+            else
+            {
+                admin.Rol = "Administrador";
+                admin.PasswordHash = auth.HashPassword(admin, "Admin123!");
+            }
 
-                var cliente = new Usuario
+            var cliente = db.Usuarios.FirstOrDefault(u => u.Email == "cliente@canchas.com");
+            if (cliente == null)
+            {
+                cliente = new Usuario
                 {
                     Nombre = "Cliente Juan Pérez",
                     Email = "cliente@canchas.com",
@@ -29,9 +39,14 @@ namespace CanchasApi.Data
                 };
                 cliente.PasswordHash = auth.HashPassword(cliente, "Cliente123!");
                 db.Usuarios.Add(cliente);
-
-                await db.SaveChangesAsync();
             }
+            else
+            {
+                cliente.Rol = "Cliente";
+                cliente.PasswordHash = auth.HashPassword(cliente, "Cliente123!");
+            }
+
+            await db.SaveChangesAsync();
 
             // 2. Sedes semilla
             if (!db.Sedes.Any())
